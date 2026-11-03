@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pntly</title>
+<meta name="theme-color" content="#2563eb">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  body{margin:0;padding:10px;font-family:system-ui,sans-serif;background:#fff;color:#111}
+  @media (prefers-color-scheme:dark){body{background:#161616;color:#eee}}
+  canvas{width:100%;max-width:600px;aspect-ratio:3/2;border:1px solid #888;background:#fff;touch-action:none;display:block}
+  button{font:inherit;padding:6px 12px;margin:6px 4px 0 0}
+</style>
+</head>
+<body>
+<h2>Pntly</h2>
+<canvas id="cv" width="600" height="400"></canvas>
+<button id="clear">مسح</button>
+<button id="install" hidden>تثبيت التطبيق</button>
+
+<script>
+// رسم بسيط للتجربة
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+ctx.lineWidth = 6; ctx.lineCap = "round"; ctx.strokeStyle = "#e11d48";
+let drawing = false, last;
+const pos = e => { const r = cv.getBoundingClientRect(); return [(e.clientX-r.left)*cv.width/r.width, (e.clientY-r.top)*cv.height/r.height]; };
+cv.onpointerdown = e => { drawing = true; last = pos(e); cv.setPointerCapture(e.pointerId); };
+cv.onpointermove = e => { if (!drawing) return; const p = pos(e); ctx.beginPath(); ctx.moveTo(...last); ctx.lineTo(...p); ctx.stroke(); last = p; };
+cv.onpointerup = () => drawing = false;
+document.getElementById("clear").onclick = () => ctx.clearRect(0, 0, cv.width, cv.height);
+
+// تسجيل الـ Service Worker
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+
+// زرار التثبيت (كروم وإيدج)
+let deferred;
+addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); deferred = e;
+  document.getElementById("install").hidden = false;
+});
+document.getElementById("install").onclick = async () => {
+  deferred.prompt(); await deferred.userChoice;
+  document.getElementById("install").hidden = true;
+};
+</script>
+</body>
+</html>
